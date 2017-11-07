@@ -18,6 +18,7 @@ export const connect = (states) => {
 
 function compose(model, namespace) {
     console.log('compose>>>>>>>>>>>>>>>>>>>>>>>.');
+    const {state} = model;
     let actions = {};
     for (let key in model) {
         if (typeof model[key] === 'function') {
@@ -27,15 +28,25 @@ function compose(model, namespace) {
                         state = type;
                         type = false;
                     }
-                    action.commit((type ? type : namespace).toUpperCase(), state, {root: true});
+                    action.commit((type ? type : namespace), state, {root: true});
                 };
                 await model[key].apply(this, [{commit, state: action.state}, payload]);
             };
         }
     }
+    let getters = {};
+    let mutations = {};
+    for (let key in state) {
+        mutations[key] = (function (key) {
+            return (state, payload) => state[key] = {...state[key], ...payload};
+        })(key);
+        getters[key] = state =>  state[key];
+    }
     return {
         ...model,
-        actions
+        actions,
+        getters,
+        mutations
     };
 };
 
@@ -64,20 +75,18 @@ export const init = ({
     Object.keys(modules).forEach(key => {
         const module = compose(modules[key], key);
         res[key] = module;
-        mutations[key.toUpperCase()] = (function (key) {
+        mutations[key] = (function (key) {
             return (state, payload) => state[key] = {...state[key], ...payload};
         })(key);
         getters[key] = state =>  state[key];
     })
-
+    console.log(res);
     const store =  new Vuex.Store({
         actions,
         getters,
         mutations,
         modules: res,
-        plugins: [clearPlugin],
-        dispatch: function () {console.log(12312312);}
+        plugins: [clearPlugin]
     });
-
     return store;
 }
