@@ -3,74 +3,81 @@ import Vue from 'vue'
 
 const {mapGetters, mapActions, mapState, Store} = Vuex;
 
+
 export const connect = (states) => {
     console.log('connect>>>>>>>>>>>>>>>>>>>>>>>.');
-    let getters = Object
-        .keys(states)
-        .map((key) => {
-            return mapState(key, states[key]);
-        });
+    let getters = mapGetters(states);
     return (component) => {
-        getters.forEach((item) => {
-            component.computed = {
-                ...component.computed,
-                ...item
-            };
-        });
+        component.computed = {
+            ...component.computed,
+            ...getters
+        };
         return component;
     };
 };
 
-function compose(model) {
+function compose(model, namespace) {
     console.log('compose>>>>>>>>>>>>>>>>>>>>>>>.');
-    const {state} = model;
-    let mutations = {};
     let actions = {};
-    for (var key in state) {
-        // model.getters[key] = (state) => state[key];
-        mutations[key.toUpperCase()] = (function (key) {
-            return (state, data) =>  state[key] = data;;
-        })(key);
-    }
-    for (let prop in model) {
-        if (typeof model[prop] === 'function') {
-            actions[prop] = async function (action, data) {
-                function commit(state) {
-                    Object.keys(state).forEach(key => {
-                        action.commit(key.toUpperCase(), state[key]);
-                    });
+    for (let key in model) {
+        if (typeof model[key] === 'function') {
+            actions[key] = async function (action, payload) {
+                function commit(type, state) {
+                    if (arguments.length === 1) {
+                        state = type;
+                        type = false;
+                    }
+                    action.commit((type ? type : namespace).toUpperCase(), state, {root: true});
                 };
-                await model[prop].apply(this, [{commit, state: action.state}, data]);
+                await model[key].apply(this, [{commit, state: action.state}, payload]);
             };
         }
     }
     return {
         ...model,
-        actions,
-        mutations
+        actions
     };
 };
 
 
 export const init = ({
-    actions,
-    getters,
+    actions = {},
+    getters = {},
+    mutations = {},
     modules
 }) => {
+    const clearPlugin = store => {
+        // 当 store 初始化后调用
+        // console.log('plugin', store);
+        store.subscribeAction((action, state) => {
+            // 每次 mutation 之后调用
+            console.log(action, state);
+        });
+        store.subscribe((mutation, state) => {
+            // 每次 mutation 之后调用
+            console.log(mutation, state);
+        });
+    };
     console.log('init>>>>>>>>>>>>>>>>>>>>>>>.');
     Vue.use(Vuex)
-    const debug = process.env.NODE_ENV !== 'production'
-    const res = {}
+    let res = {};
     Object.keys(modules).forEach(key => {
-        const module = compose(modules[key]);
-        console.log(module);
+        const module = compose(modules[key], key);
         res[key] = module;
+        mutations[key.toUpperCase()] = (function (key) {
+            return (state, payload) => state[key] = {...state[key], ...payload};
+        })(key);
+        getters[key] = state =>  state[key];
     })
-    
-    return new Vuex.Store({
+
+    const store =  new Vuex.Store({
         actions,
         getters,
+        mutations,
         modules: res,
-        strict: debug,
-    })
+        plugins: [clearPlugin],
+        dispatch: function () {console.log(12312312);}
+    });
+
+    return store;
 }

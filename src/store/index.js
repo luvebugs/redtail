@@ -9,6 +9,7 @@ import {init} from '../judy';
 export default init({
     actions,
     getters,
+    mutations: {},
     modules: {
       products
     },

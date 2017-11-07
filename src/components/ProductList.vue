@@ -1,7 +1,7 @@
 <template>
 <div>
     <ul>
-        <li v-for="p in products">
+        <li v-for="p in products.all">
             {{ p.title }} - {{ p.price }}
             <br>
             <button :disabled="!p.inventory" @click="addToCart(p)">
@@ -9,34 +9,27 @@
             </button>
         </li>
     </ul>
-    <div>total: {{ total}}</div>
+    <div>total: {{products.total}}</div>
 </div>
 </template>
 
 <script>
 
     import {
-        connect
+        connect,
+        dispatch
     } from '../judy'
     
     const component = {
         methods: {
             addToCart(p) {
-                console.log(p.price);
                 this.$store.dispatch('products/addProducts', {price: p.price})
             }
         },
         created() {
-            console.log(this.total);
             this.$store.dispatch('products/getAllProducts')
         }
     };
 
-    export default  connect({
-        products: {
-            products: 'all',
-            total: 'total'
-        }
-    })(component);
-
+    export default connect(['products'])(component);
 </script>
