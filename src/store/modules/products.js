@@ -9,7 +9,7 @@ const model = {
     },
     async getAllProducts({commit, state}) {
         await shop.getProducts(products => {
-            commit('products', {all: products});
+            commit('products/all', products);
         })
     },
     async addProducts({commit, state}, {price}) {
