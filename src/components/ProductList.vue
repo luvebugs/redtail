@@ -10,6 +10,9 @@
         </li>
     </ul>
     <div>total: {{products.total}}</div>
+
+    <input v-model="products.msg">
+    {{products.msg}}
 </div>
 </template>
 

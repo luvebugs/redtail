@@ -5,7 +5,7 @@ const {mapGetters, mapActions, mapState, Store} = Vuex;
 
 
 export const connect = (states) => {
-    console.log('connect>>>>>>>>>>>>>>>>>>>>>>>.');
+    // console.log('connect>>>>>>>>>>>>>>>>>>>>>>>.');
     let getters = mapGetters(states);
     return (component) => {
         component.computed = {
@@ -17,7 +17,7 @@ export const connect = (states) => {
 };
 
 function compose(model, namespace) {
-    console.log('compose>>>>>>>>>>>>>>>>>>>>>>>.');
+    // console.log('compose>>>>>>>>>>>>>>>>>>>>>>>.');
     const {state} = model;
     let actions = {};
     for (let key in model) {
@@ -57,19 +57,6 @@ export const init = ({
     mutations = {},
     modules
 }) => {
-    const clearPlugin = store => {
-        // 当 store 初始化后调用
-        // console.log('plugin', store);
-        store.subscribeAction((action, state) => {
-            // 每次 mutation 之后调用
-            console.log(action, state);
-        });
-        store.subscribe((mutation, state) => {
-            // 每次 mutation 之后调用
-            console.log(mutation, state);
-        });
-    };
-    console.log('init>>>>>>>>>>>>>>>>>>>>>>>.');
     Vue.use(Vuex)
     let res = {};
     Object.keys(modules).forEach(key => {
@@ -78,15 +65,14 @@ export const init = ({
         mutations[key] = (function (key) {
             return (state, payload) => state[key] = {...state[key], ...payload};
         })(key);
-        getters[key] = state =>  state[key];
+        getters[key] = state =>  ({...state[key]});
     })
-    console.log(res);
+    // console.log(res);
     const store =  new Vuex.Store({
         actions,
         getters,
         mutations,
-        modules: res,
-        plugins: [clearPlugin]
+        modules: res
     });
     return store;
-}
+};

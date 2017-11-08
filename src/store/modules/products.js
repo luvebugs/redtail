@@ -5,7 +5,8 @@ const model = {
     namespaced: true,
     state: {
         all: [],
-        total: 0
+        total: 0,
+        msg: 'name'
     },
     async getAllProducts({commit, state}) {
         await shop.getProducts(products => {
