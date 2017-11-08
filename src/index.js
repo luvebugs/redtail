@@ -65,7 +65,7 @@ export const init = ({
         mutations[key] = (function (key) {
             return (state, payload) => state[key] = {...state[key], ...payload};
         })(key);
-        getters[key] = state =>  state[key];
+        getters[key] = state =>  ({...state[key]});
     })
     // console.log(res);
     const store =  new Vuex.Store({
