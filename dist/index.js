@@ -36,7 +36,6 @@ var mapGetters = _vuex2.default.mapGetters,
     mapState = _vuex2.default.mapState,
     Store = _vuex2.default.Store;
 var connect = exports.connect = function connect(states) {
-    // console.log('connect>>>>>>>>>>>>>>>>>>>>>>>.');
     var getters = mapGetters(states);
     return function (component) {
         component.computed = (0, _extends3.default)({}, component.computed, getters);
@@ -45,7 +44,6 @@ var connect = exports.connect = function connect(states) {
 };
 
 function compose(model, namespace) {
-    // console.log('compose>>>>>>>>>>>>>>>>>>>>>>>.');
     var state = model.state;
 
     var actions = {};
@@ -99,7 +97,7 @@ function compose(model, namespace) {
             };
         }(key);
         getters[key] = function (state) {
-            return state[key];
+            return (0, _extends3.default)({}, state[key]);
         };
     };
 
@@ -120,7 +118,8 @@ var init = exports.init = function init(_ref2) {
         getters = _ref2$getters === undefined ? {} : _ref2$getters,
         _ref2$mutations = _ref2.mutations,
         mutations = _ref2$mutations === undefined ? {} : _ref2$mutations,
-        modules = _ref2.modules;
+        modules = _ref2.modules,
+        plugins = _ref2.plugins;
 
     _vue2.default.use(_vuex2.default);
     var res = {};
@@ -133,15 +132,16 @@ var init = exports.init = function init(_ref2) {
             };
         }(key);
         getters[key] = function (state) {
-            return state[key];
+            return (0, _extends3.default)({}, state[key]);
         };
     });
-    // console.log(res);
     var store = new _vuex2.default.Store({
         actions: actions,
         getters: getters,
         mutations: mutations,
-        modules: res
+        modules: res,
+        strict: true,
+        plugins: plugins
     });
     return store;
 };

@@ -5,7 +5,6 @@ const {mapGetters, mapActions, mapState, Store} = Vuex;
 
 
 export const connect = (states) => {
-    // console.log('connect>>>>>>>>>>>>>>>>>>>>>>>.');
     let getters = mapGetters(states);
     return (component) => {
         component.computed = {
@@ -17,7 +16,6 @@ export const connect = (states) => {
 };
 
 function compose(model, namespace) {
-    // console.log('compose>>>>>>>>>>>>>>>>>>>>>>>.');
     const {state} = model;
     let actions = {};
     for (let key in model) {
@@ -40,7 +38,7 @@ function compose(model, namespace) {
         mutations[key] = (function (key) {
             return (state, payload) => state[key] = {...state[key], ...payload};
         })(key);
-        getters[key] = state =>  state[key];
+        getters[key] = state =>  ({...state[key]});
     }
     return {
         ...model,
@@ -55,7 +53,8 @@ export const init = ({
     actions = {},
     getters = {},
     mutations = {},
-    modules
+    modules,
+    plugins
 }) => {
     Vue.use(Vuex)
     let res = {};
@@ -67,12 +66,13 @@ export const init = ({
         })(key);
         getters[key] = state =>  ({...state[key]});
     })
-    // console.log(res);
     const store =  new Vuex.Store({
         actions,
         getters,
         mutations,
-        modules: res
+        modules: res,
+        strict: true,
+        plugins
     });
     return store;
 };
