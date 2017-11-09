@@ -20,15 +20,22 @@ function compose(model, namespace) {
     let actions = {};
     for (let key in model) {
         if (typeof model[key] === 'function') {
-            actions[key] = async function (action, payload) {
+            actions[key] = async function (handler, payload) {
                 function commit(type, state) {
                     if (arguments.length === 1) {
                         state = type;
                         type = false;
                     }
-                    action.commit((type ? type : namespace), state, {root: true});
+                    handler.commit((type ? type : namespace), state, {root: true});
                 };
-                await model[key].apply(this, [{commit, state: action.state}, payload]);
+                function dispatch(type, state) {
+                    if (arguments.length === 1) {
+                        state = type;
+                        type = false;
+                    }
+                    handler.dispatch((type ? type : namespace), state, {root: true});
+                };
+                await model[key].apply(this, [{...handler, commit, dispatch}, payload]);
             };
         }
     }
