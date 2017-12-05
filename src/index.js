@@ -21,21 +21,27 @@ function compose(model, namespace) {
     for (let key in model) {
         if (typeof model[key] === 'function') {
             actions[key] = async function (handler, payload) {
-                function commit(type, state) {
+                function commit() {
                     if (arguments.length === 1) {
-                        state = type;
-                        type = false;
+                        const state = arguments[0];
+                        return state.type ? handler.commit(state) : handler.commit(namespace, state, {root: true});
+                    } else {
+                        const type = arguments[0];
+                        const state = arguments[1];
+                        return handler.commit(type, state, {root: true});
                     }
-                    handler.commit((type ? type : namespace), state, {root: true});
                 };
-                function dispatch(type, state) {
+                function dispatch() {
                     if (arguments.length === 1) {
-                        state = type;
-                        type = false;
+                        const state = arguments[0];
+                        return state.type ? handler.dispatch(state) : handler.dispatch(namespace, state, {root: true});
+                    } else {
+                        const type = arguments[0];
+                        const state = arguments[1];
+                        return handler.dispatch(type, state, {root: true});
                     }
-                    handler.dispatch((type ? type : namespace), state, {root: true});
                 };
-                await model[key].apply(this, [{...handler, commit, dispatch}, payload]);
+                return await model[key].apply(this, [{...handler, commit, dispatch}, payload]);
             };
         }
     }
@@ -43,9 +49,20 @@ function compose(model, namespace) {
     let mutations = {};
     for (let key in state) {
         mutations[key] = (function (key) {
-            return (state, payload) => state[key] = {...state[key], ...payload};
+            return (state, payload) => {
+                if (typeof payload === 'object' && !payload.length) {
+                    for (const index in payload) {
+                        if (payload.hasOwnProperty(index)) {
+                            const element = payload[index];
+                            state[key][index] = element;
+                        }
+                    }
+                } else {
+                    state[key] = payload;
+                }
+            };
         })(key);
-        getters[key] = state =>  ({...state[key]});
+        getters[key] = state =>  state[key];
     }
     return {
         ...model,
@@ -69,9 +86,20 @@ export const init = ({
         const module = compose(modules[key], key);
         res[key] = module;
         mutations[key] = (function (key) {
-            return (state, payload) => state[key] = {...state[key], ...payload};
+            return (state, payload) => {
+                if (typeof payload === 'object' && !payload.length) {
+                    for (const index in payload) {
+                        if (payload.hasOwnProperty(index)) {
+                            const element = payload[index];
+                            state[key][index] = element;
+                        }
+                    }
+                } else {
+                    state[key] = payload;
+                }
+            };
         })(key);
-        getters[key] = state =>  ({...state[key]});
+        getters[key] = state =>  state[key];
     })
     const store =  new Vuex.Store({
         actions,

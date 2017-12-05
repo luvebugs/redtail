@@ -9,6 +9,10 @@ var _keys = require('babel-runtime/core-js/object/keys');
 
 var _keys2 = _interopRequireDefault(_keys);
 
+var _typeof2 = require('babel-runtime/helpers/typeof');
+
+var _typeof3 = _interopRequireDefault(_typeof2);
+
 var _regenerator = require('babel-runtime/regenerator');
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
@@ -51,25 +55,43 @@ function compose(model, namespace) {
     var _loop = function _loop(key) {
         if (typeof model[key] === 'function') {
             actions[key] = function () {
-                var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(action, payload) {
-                    var commit;
+                var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(handler, payload) {
+                    var commit, dispatch;
                     return _regenerator2.default.wrap(function _callee$(_context) {
                         while (1) {
                             switch (_context.prev = _context.next) {
                                 case 0:
-                                    commit = function commit(type, state) {
+                                    dispatch = function dispatch() {
                                         if (arguments.length === 1) {
-                                            state = type;
-                                            type = false;
+                                            var _state3 = arguments[0];
+                                            return _state3.type ? handler.dispatch(_state3) : handler.dispatch(namespace, _state3, { root: true });
+                                        } else {
+                                            var type = arguments[0];
+                                            var _state4 = arguments[1];
+                                            return handler.dispatch(type, _state4, { root: true });
                                         }
-                                        action.commit(type ? type : namespace, state, { root: true });
+                                    };
+
+                                    commit = function commit() {
+                                        if (arguments.length === 1) {
+                                            var _state = arguments[0];
+                                            return _state.type ? handler.commit(_state) : handler.commit(namespace, _state, { root: true });
+                                        } else {
+                                            var type = arguments[0];
+                                            var _state2 = arguments[1];
+                                            return handler.commit(type, _state2, { root: true });
+                                        }
                                     };
 
                                     ;
-                                    _context.next = 4;
-                                    return model[key].apply(this, [{ commit: commit, state: action.state }, payload]);
+                                    ;
+                                    _context.next = 6;
+                                    return model[key].apply(this, [(0, _extends3.default)({}, handler, { commit: commit, dispatch: dispatch }), payload]);
 
-                                case 4:
+                                case 6:
+                                    return _context.abrupt('return', _context.sent);
+
+                                case 7:
                                 case 'end':
                                     return _context.stop();
                             }
@@ -93,11 +115,20 @@ function compose(model, namespace) {
     var _loop2 = function _loop2(key) {
         mutations[key] = function (key) {
             return function (state, payload) {
-                return state[key] = (0, _extends3.default)({}, state[key], payload);
+                if ((typeof payload === 'undefined' ? 'undefined' : (0, _typeof3.default)(payload)) === 'object' && !payload.length) {
+                    for (var index in payload) {
+                        if (payload.hasOwnProperty(index)) {
+                            var element = payload[index];
+                            state[key][index] = element;
+                        }
+                    }
+                } else {
+                    state[key] = payload;
+                }
             };
         }(key);
         getters[key] = function (state) {
-            return (0, _extends3.default)({}, state[key]);
+            return state[key];
         };
     };
 
@@ -128,11 +159,20 @@ var init = exports.init = function init(_ref2) {
         res[key] = module;
         mutations[key] = function (key) {
             return function (state, payload) {
-                return state[key] = (0, _extends3.default)({}, state[key], payload);
+                if ((typeof payload === 'undefined' ? 'undefined' : (0, _typeof3.default)(payload)) === 'object' && !payload.length) {
+                    for (var index in payload) {
+                        if (payload.hasOwnProperty(index)) {
+                            var element = payload[index];
+                            state[key][index] = element;
+                        }
+                    }
+                } else {
+                    state[key] = payload;
+                }
             };
         }(key);
         getters[key] = function (state) {
-            return (0, _extends3.default)({}, state[key]);
+            return state[key];
         };
     });
     var store = new _vuex2.default.Store({
