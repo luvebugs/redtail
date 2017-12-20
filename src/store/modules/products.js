@@ -12,9 +12,10 @@ const model = {
         await shop.getProducts(products => {
             commit('products/all', products);
         })
+        return;
     },
     async addProducts({commit, state}, {price}) {
-        commit('products', {total: state.total + price});
+        commit({total: state.total + price});
     },
     // mutations: {
     //     ALL(state, {products}) {
@@ -24,7 +25,6 @@ const model = {
     // getters: {
     //     allProducts: state => state.all
     // },
-    // actions
     // actions: {
     //     getAllProducts ({ commit }) {
     //         shop.getProducts(products => {
