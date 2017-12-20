@@ -19,7 +19,7 @@ export const connect = (states) => {
     states.forEach((state) => {
         watch[toGetter(state)] = {
             handler(value) {
-                this[state] = value;
+                this[state] = {...value};
             },
             deep: true,
             immediate: true

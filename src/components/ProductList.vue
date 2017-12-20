@@ -11,7 +11,7 @@
         </ul>
         <div>total: {{products.total}}</div>
 
-        <input :value="products.msg" @change="changeMsg"> {{products.msg}}
+        <input v-model="products.msg" @change="changeMsg"> {{products.msg}}
         <button @click="add">hello</button>
     </div>
 </template>
@@ -24,13 +24,6 @@
     } from '../judy'
 
     const component = {
-        data: function () {
-            return {
-                name: {
-                    msg: 123456
-                }
-            };
-        },
         methods: {
             addToCart(p) {
                 this.$store.dispatch('products/addProducts', {
@@ -45,6 +38,7 @@
             }
         },
         created() {
+            console.log(this);
             const a = this.$store.dispatch('products/getAllProducts')
             a.then(v => {console.log('promise');});
             this.$store.commit('products/msg', '123123');
