@@ -4,16 +4,74 @@ import Vue from 'vue'
 const {mapGetters, mapActions, mapState, Store} = Vuex;
 
 
+function toGetter(value) {
+    return 'get' + value.charAt(0).toUpperCase() + value.slice(1);
+}
+function toSetter(value) {
+    return 'set' + value.charAt(0).toUpperCase() + value.slice(1);
+}
 export const connect = (states) => {
-    let getters = mapGetters(states);
-    return (component) => {
-        component.computed = {
-            ...component.computed,
-            ...getters
+    const getters = mapGetters(states.map(state => toGetter(state)));
+    const actions = mapActions(states.map(state => toSetter(state)));
+    
+    const watch = {};
+    const data = {};
+    states.forEach((state) => {
+        watch[toGetter(state)] = {
+            handler(value) {
+                this[state] = {...value};
+            },
+            deep: true,
+            immediate: true
         };
+        watch[state] = {
+            handler(value) {
+                this[toSetter(state)](value);
+            },
+            deep: true,
+            immediate: true
+        };
+        data[state] = {};
+    });
+
+    var mixin = {
+        data: function () {
+            return data;
+        },
+        watch,
+        computed: {
+            ...getters,
+        },
+        methods: {
+            ...actions
+        }
+    }
+    return (component) => {
+        component.mixins = [mixin];
         return component;
     };
 };
+
+function getMutation(key) {
+    return (function (key) {
+        return (state, payload) => {
+            if (typeof payload === 'object' && !payload.length) {
+                for (const index in payload) {
+                    if (payload.hasOwnProperty(index)) {
+                        const element = payload[index];
+                        state[key][index] = element;
+                    }
+                }
+            } else {
+                state[key] = payload;
+            }
+        };
+    })(key)
+}
+
+function getGetter(key) {
+    return state =>  state[key];
+}
 
 function compose(model, namespace) {
     const {state} = model;
@@ -48,21 +106,8 @@ function compose(model, namespace) {
     let getters = {};
     let mutations = {};
     for (let key in state) {
-        mutations[key] = (function (key) {
-            return (state, payload) => {
-                if (typeof payload === 'object' && !payload.length) {
-                    for (const index in payload) {
-                        if (payload.hasOwnProperty(index)) {
-                            const element = payload[index];
-                            state[key][index] = element;
-                        }
-                    }
-                } else {
-                    state[key] = payload;
-                }
-            };
-        })(key);
-        getters[key] = state =>  state[key];
+        mutations[key] = getMutation(key);
+        getters[toGetter(key)] = getGetter(key);
     }
     return {
         ...model,
@@ -85,21 +130,11 @@ export const init = ({
     Object.keys(modules).forEach(key => {
         const module = compose(modules[key], key);
         res[key] = module;
-        mutations[key] = (function (key) {
-            return (state, payload) => {
-                if (typeof payload === 'object' && !payload.length) {
-                    for (const index in payload) {
-                        if (payload.hasOwnProperty(index)) {
-                            const element = payload[index];
-                            state[key][index] = element;
-                        }
-                    }
-                } else {
-                    state[key] = payload;
-                }
-            };
-        })(key);
-        getters[key] = state =>  state[key];
+        mutations[key] = getMutation(key);
+        getters[toGetter(key)] = getGetter(key);
+        actions[toSetter(key)] = async function ({commit}, payload) {
+            return commit(key, payload);
+        };
     })
     const store =  new Vuex.Store({
         actions,
